@@ -1,0 +1,7 @@
+.metals/
+.bloop/
+.vscode/
+
+build/
+obj_dir/
+out/

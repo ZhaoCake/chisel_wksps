@@ -1,0 +1,5 @@
+run：
+
+```bash
+make verilog
+```
