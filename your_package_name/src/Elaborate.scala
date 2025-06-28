@@ -46,7 +46,7 @@ object Elaborate extends App {
   )
 
   ChiselStage.emitSystemVerilogFile(
-    new YourMain, // Replace with your main module
+    new YourMain, // Main module matching TOPNAME in Makefile
     firrtlOpts,
     firtoolOpts
   )

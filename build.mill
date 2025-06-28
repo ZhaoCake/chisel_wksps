@@ -20,6 +20,7 @@ object your_package_name extends ScalaModule with ScalafmtModule { m =>
     "-Xcheckinit"
   )
 
+// // 加入 rvdecoderdb 
 //   def sources = T.sources {
 //     super.sources() ++ Seq {
 //         PathRef(super.millSourcePath / os.up / "rvdecoderdb" / "rvdecoderdb" )

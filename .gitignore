@@ -1,7 +1,46 @@
+# Scala/Mill相关
 .metals/
 .bloop/
-.vscode/
+.bsp/
+target/
+project/target/
+project/project/
 
+# IDE相关
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# 构建输出
 build/
 obj_dir/
 out/
+generated/
+
+# Verilator相关
+*.vcd
+*.fst
+*.xml
+
+# 日志文件
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Nix相关
+result
+result-*
+
+# 临时文件
+*.tmp
+*.swp
+*.swo
+*~
+
+# 编译文件
+*.class
+*.jar

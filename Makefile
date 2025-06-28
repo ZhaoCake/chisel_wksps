@@ -3,7 +3,7 @@ MAIN_HOME = $(shell pwd)
 CHISEL_PACKAGE = your_package_name  # Replace with your actual package name
 
 # ********** verilator settings **********
-TOPNAME = shuangMain
+TOPNAME = YourMain
 VERILATOR_FLAGS = --trace --exe --cc -j 0 --build 
 VERILATOR_CFLAGS = -g -I $(MAIN_HOME)/verilator_csrc -mcmodel=large -O2
 
@@ -14,9 +14,7 @@ VERILATOR_CFLAGS += -DMTRACE=$(MTRACE)
 VSRC_DIR = $(BUILD_DIR)
 VERILOG_SRCS = $(shell find $(VSRC_DIR) -name "*.v" -o -name "*.sv")
 CSRC_DIR = $(MAIN_HOME)/verilator_csrc
-CSRCS = $(CSRC_DIR)/memory.cpp \
-        $(CSRC_DIR)/sim_main.cpp \
-		$(CSRC_DIR)/difftest.cpp \
+CSRCS = $(CSRC_DIR)/sim_main.cc
 
 # ********** verilator settings **********
 
@@ -30,29 +28,59 @@ verilog:
 test:
 	mill -i __.test
 
-vsim: vsimclean
+vsim: verilog vsimclean
 	@echo "Compiling for verilator..."
 	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
 		$(VERILOG_SRCS) $(CSRCS) \
 		--CFLAGS "$(VERILATOR_CFLAGS)"
+	@echo "Running simulation..."
+	./obj_dir/V$(TOPNAME)
 
 vsimclean:
+	@echo "Cleaning up verilator build..."
 	-rm -rf obj_dir
 
-emu: verilog
-	cd $(SHUANG_HOME)/difftest && $(MAKE)  EMU_TRACE=1  emu -j8  
+# 运行带VCD跟踪的仿真
+vsim-trace: verilog vsimclean
+	@echo "Compiling for verilator with VCD tracing..."
+	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
+		$(VERILOG_SRCS) $(CSRCS) \
+		--CFLAGS "$(VERILATOR_CFLAGS) -DMTRACE=1"
+	@echo "Running simulation with VCD tracing..."
+	./obj_dir/V$(TOPNAME)
 
+# 查看波形文件
+wave:
+	@if [ -f waveform.vcd ]; then \
+		echo "Opening waveform.vcd with GTKWave..."; \
+		gtkwave waveform.vcd; \
+	else \
+		echo "No waveform.vcd found. Run 'make vsim-trace' first."; \
+	fi
+
+# 生成IDE配置
 bsp:
-	mill -i mill.bsp.BSP/install
+	mill mill.bsp.BSP/install
 
 idea:
-	mill -i mill.scalalib.GenIdea/idea
-
-help:
-	mill -i tlt.runMain tlt.Elaborate --help
+	mill mill.idea.GenIdea/idea
 
 clean:
 	-rm -rf $(BUILD_DIR)
 	-rm -rf obj_dir
+	-rm -f waveform.vcd
+	-rm -f *.log
 
-.PHONY: clean init bump bsp idea help verilog emu vsim vsimclean
+.PHONY: clean test verilog vsim vsimclean vsim-trace wave bsp idea help
+
+help:
+	@echo "可用的Make目标:"
+	@echo "  verilog     - 生成Verilog代码"
+	@echo "  test        - 运行Scala测试"
+	@echo "  vsim        - 编译并运行Verilator仿真"
+	@echo "  vsim-trace  - 运行带VCD跟踪的仿真"
+	@echo "  wave        - 使用GTKWave查看波形"
+	@echo "  clean       - 清理所有生成文件"
+	@echo "  bsp         - 生成BSP配置"
+	@echo "  idea        - 生成IntelliJ IDEA项目"
+	@echo "  help        - 显示此帮助信息"
