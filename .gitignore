@@ -34,6 +34,7 @@ Thumbs.db
 # Nix相关
 result
 result-*
+flake.lock
 
 # 临时文件
 *.tmp
