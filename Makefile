@@ -29,7 +29,7 @@ verilog:
 test:
 	mill -i __.test
 
-vsim: verilog vsimclean
+vsim: verilog
 	@echo "Compiling for verilator..."
 	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
 		$(VERILOG_SRCS) $(CSRCS) \
@@ -42,7 +42,7 @@ vsimclean:
 	-rm -rf obj_dir
 
 # 运行带VCD跟踪的仿真
-vsim-trace: verilog vsimclean
+vsim-trace: verilog
 	@echo "Compiling for verilator with VCD tracing..."
 	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
 		$(VERILOG_SRCS) $(CSRCS) \
