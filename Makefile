@@ -29,7 +29,7 @@ verilog:
 test:
 	mill -i __.test
 
-vsim: verilog
+vsim: 
 	@echo "Compiling for verilator..."
 	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
 		$(VERILOG_SRCS) $(CSRCS) \
@@ -40,15 +40,6 @@ vsim: verilog
 vsimclean:
 	@echo "Cleaning up verilator build..."
 	-rm -rf obj_dir
-
-# 运行带VCD跟踪的仿真
-vsim-trace: verilog
-	@echo "Compiling for verilator with VCD tracing..."
-	verilator --top-module $(TOPNAME) $(VERILATOR_FLAGS) \
-		$(VERILOG_SRCS) $(CSRCS) \
-		--CFLAGS "$(VERILATOR_CFLAGS) -DMTRACE=1"
-	@echo "Running simulation with VCD tracing..."
-	./obj_dir/V$(TOPNAME)
 
 # 查看波形文件
 wave:
