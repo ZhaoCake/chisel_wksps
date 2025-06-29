@@ -83,6 +83,9 @@
             cmake
             pkg-config
 
+            # Python3（Verilator需要）
+            python3
+
             # 系统库（Verilator可能需要）
             zlib
             ncurses
@@ -104,9 +107,6 @@
             export JAVA_HOME="${jdk}"
             export SCALA_HOME="${scala}"
             export PATH="$JAVA_HOME/bin:$SCALA_HOME/bin:$PATH"
-
-            # Verilator相关环境变量
-            export VERILATOR_ROOT="${verilator}"
 
             # 项目相关环境变量
             export PROJECT_ROOT="$(pwd)"

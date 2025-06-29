@@ -1,6 +1,7 @@
 BUILD_DIR = ./build
 MAIN_HOME = $(shell pwd)
-CHISEL_PACKAGE = your_package_name  # Replace with your actual package name
+CHISEL_PACKAGE = your_package_name
+# Replace with your actual package name
 
 # ********** verilator settings **********
 TOPNAME = YourMain
