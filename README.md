@@ -15,11 +15,12 @@
 
 ### 使用Nix（推荐）
 
-1. 确保你安装了Nix和启用了flakes功能
+1. 确保你安装了Nix并启用了flakes功能
 2. 进入开发环境：
    ```bash
    nix develop
    ```
+3. 你也可以直接用 `.envrc` 自动激活环境（见下文）
 
 ### 手动安装依赖
 
@@ -36,25 +37,25 @@
 
 ```bash
 # 生成Verilog代码
-make verilog
+nix run .#verilog
 
 # 运行仿真
-make vsim
+nix run .#vsim
 
 # 运行带波形跟踪的仿真
-make vsim-trace
+nix run .#vsim-trace
 
 # 查看波形文件
-make wave
+nix run .#wave
 
 # 运行测试
-make test
+nix run .#test
 
 # 清理生成文件
-make clean
+nix run .#clean
 
 # 显示帮助
-make help
+nix run .#help
 ```
 
 ### 项目结构
@@ -63,7 +64,6 @@ make help
 .
 ├── flake.nix                    # Nix开发环境配置
 ├── build.mill                  # Mill构建配置
-├── Makefile                     # 构建和仿真脚本
 ├── your_package_name/
 │   └── src/
 │       ├── YourMain.scala       # 主模块
@@ -79,7 +79,7 @@ make help
 1. **重命名包**：
    - 将 `your_package_name` 目录重命名为你的项目名
    - 更新 `build.mill` 中的对象名
-   - 更新 `Makefile` 中的 `CHISEL_PACKAGE` 变量
+   - 更新 `flake.nix` 中的 `chiselPackage` 变量
 
 2. **修改主模块**：
    - 编辑 `YourMain.scala` 实现你的硬件逻辑
@@ -95,24 +95,24 @@ make help
 
 生成BSP配置（推荐用于VS Code + Metals）：
 ```bash
-make bsp
+nix run .#bsp
 ```
 
 生成IntelliJ IDEA项目：
 ```bash
-make idea
+nix run .#idea
 ```
 
 ### 调试
 
 运行带跟踪的仿真来生成VCD波形文件：
 ```bash
-make vsim-trace
+nix run .#vsim-trace
 ```
 
 然后使用GTKWave查看波形：
 ```bash
-make wave
+nix run .#wave
 ```
 
 ## 故障排除
@@ -127,9 +127,9 @@ make wave
 
 如果遇到奇怪的问题，尝试完全清理并重建：
 ```bash
-make clean
-make verilog
-make vsim
+nix run .#clean
+nix run .#verilog
+nix run .#vsim
 ```
 
 ## 贡献

@@ -11,28 +11,25 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        # 定义JDK版本（Chisel推荐使用JDK 11或17）
         jdk = pkgs.openjdk17;
-
-        # Mill构建工具
         mill = pkgs.mill;
-
-        # Scala相关工具
         scala = pkgs.scala_2_13;
-
-        # 仿真和调试工具
         verilator = pkgs.verilator;
         gtkwave = pkgs.gtkwave;
-
-        # C++开发工具（Verilator需要）
         gcc = pkgs.gcc;
         gnumake = pkgs.gnumake;
-
-        # 开发工具
+        cmake = pkgs.cmake;
+        pkg-config = pkgs.pkg-config;
+        python3 = pkgs.python3;
+        zlib = pkgs.zlib;
+        ncurses = pkgs.ncurses;
         git = pkgs.git;
         vim = pkgs.vim;
+        tree = pkgs.tree;
+        htop = pkgs.htop;
+        ripgrep = pkgs.ripgrep;
+        fd = pkgs.fd;
 
-        # 创建开发环境shell脚本
         setupScript = pkgs.writeShellScriptBin "setup-chisel-env" ''
           echo "🚀 Chisel项目模板开发环境已启动！"
           echo ""
@@ -44,10 +41,10 @@
           echo "  - GCC: $(gcc --version | head -1)"
           echo ""
           echo "🛠️  常用命令："
-          echo "  make verilog    - 生成Verilog代码"
-          echo "  make vsim       - 编译并运行Verilator仿真"
-          echo "  make test       - 运行Scala测试"
-          echo "  make clean      - 清理生成文件"
+          echo "  nix run .#verilog    - 生成Verilog代码"
+          echo "  nix run .#vsim       - 编译并运行Verilator仿真"
+          echo "  nix run .#test       - 运行Scala测试"
+          echo "  nix run .#clean      - 清理生成文件"
           echo ""
           echo "📁 项目结构："
           echo "  your_package_name/src/  - Chisel源代码"
@@ -59,123 +56,124 @@
           echo "开发环境准备就绪！Happy coding! 🎉"
         '';
 
+        chiselPackage = "your_package_name";
+        topModule = "YourMain";
+        buildDir = "build";
+        csrcDir = "verilator_csrc";
+        objDir = "obj_dir";
+
+        # 生成Verilog
+        verilogCmd = ''
+          mkdir -p ${buildDir}
+          rm -rf ${buildDir}/*
+          mill -i ${chiselPackage}.runMain ${chiselPackage}.Elaborate --target-dir ${buildDir}
+        '';
+
+        # Scala测试
+        testCmd = ''
+          mill -i __.test
+        '';
+
+        # verilator仿真
+        vsimCmd = ''
+          verilator --top-module ${topModule} --trace --exe --cc -j 0 --build \
+            $(find ${buildDir} -name "*.v" -o -name "*.sv") \
+            ${csrcDir}/sim_main.cc \
+            --CFLAGS "-g -I $(pwd)/${csrcDir} -mcmodel=large -O2"
+          ./obj_dir/V${topModule}
+        '';
+
+        # verilator仿真（带VCD跟踪）
+        vsimTraceCmd = ''
+          verilator --top-module ${topModule} --trace --exe --cc -j 0 --build \
+            -DMTRACE=1 \
+            $(find ${buildDir} -name "*.v" -o -name "*.sv") \
+            ${csrcDir}/sim_main.cc \
+            --CFLAGS "-g -I $(pwd)/${csrcDir} -mcmodel=large -O2 -DMTRACE=1"
+          ./obj_dir/V${topModule}
+        '';
+
+        # 清理
+        cleanCmd = ''
+          rm -rf ${buildDir}
+          rm -rf ${objDir}
+          rm -f waveform.vcd
+          rm -f *.log
+        '';
+
+        # 波形查看
+        waveCmd = ''
+          if [ -f waveform.vcd ]; then
+            echo "Opening waveform.vcd with GTKWave..."
+            gtkwave waveform.vcd
+          else
+            echo "No waveform.vcd found. Run 'nix run .#vsim-trace' first."
+          fi
+        '';
+
+        # BSP/IDE
+        bspCmd = "mill mill.bsp.BSP/install";
+        ideaCmd = "mill mill.idea.GenIdea/idea";
+
+        # 帮助
+        helpCmd = ''
+          echo "可用的nix命令:"
+          echo "  nix run .#verilog     - 生成Verilog代码"
+          echo "  nix run .#test        - 运行Scala测试"
+          echo "  nix run .#vsim        - 编译并运行Verilator仿真"
+          echo "  nix run .#vsim-trace  - 运行带VCD跟踪的仿真"
+          echo "  nix run .#wave        - 使用GTKWave查看波形"
+          echo "  nix run .#clean       - 清理所有生成文件"
+          echo "  nix run .#bsp         - 生成BSP配置"
+          echo "  nix run .#idea        - 生成IntelliJ IDEA项目"
+          echo "  nix run .#help        - 显示此帮助信息"
+        '';
+
       in
       {
         devShells.default = pkgs.mkShell {
           name = "chisel-template-dev";
-
-          buildInputs = with pkgs; [
-            # Java开发环境
-            jdk
-
-            # Scala和构建工具
-            scala
-            mill
-            sbt  # 备用构建工具
-
-            # 硬件仿真工具
-            verilator
-            gtkwave
-
-            # C++开发工具链
-            gcc
-            gnumake
-            cmake
-            pkg-config
-
-            # Python3（Verilator需要）
-            python3
-
-            # 系统库（Verilator可能需要）
-            zlib
-            ncurses
-
-            # 开发工具
-            git
-            vim
-            tree
-            htop
-            ripgrep
-            fd
-
-            # 自定义脚本
-            setupScript
+          buildInputs = [
+            jdk scala mill pkgs.sbt verilator gtkwave gcc gnumake cmake pkg-config
+            python3 zlib ncurses git vim tree htop ripgrep fd setupScript
           ];
-
           shellHook = ''
-            # 设置环境变量
             export JAVA_HOME="${jdk}"
             export SCALA_HOME="${scala}"
             export PATH="$JAVA_HOME/bin:$SCALA_HOME/bin:$PATH"
-
-            # 项目相关环境变量
             export PROJECT_ROOT="$(pwd)"
             export BUILD_DIR="$PROJECT_ROOT/build"
-
-            # 创建必要的目录
             mkdir -p build
             mkdir -p obj_dir
-
-            # 运行setup脚本显示欢迎信息
             setup-chisel-env
           '';
-
-          # 为IDE提供的环境变量
           NIX_SHELL_PRESERVE_PROMPT = 1;
         };
 
-        # 提供一些有用的开发命令
         apps = {
-          # 快速构建命令
-          build = flake-utils.lib.mkApp {
-            drv = pkgs.writeShellScriptBin "chisel-build" ''
-              echo "🔨 构建Chisel项目..."
-              make verilog
-            '';
-          };
-
-          # 快速仿真命令
-          sim = flake-utils.lib.mkApp {
-            drv = pkgs.writeShellScriptBin "chisel-sim" ''
-              echo "🏃 运行Verilator仿真..."
-              make vsim
-            '';
-          };
-
-          # 清理命令
-          clean = flake-utils.lib.mkApp {
-            drv = pkgs.writeShellScriptBin "chisel-clean" ''
-              echo "🧹 清理构建文件..."
-              make clean
-            '';
-          };
-
-          # 测试命令
-          test = flake-utils.lib.mkApp {
-            drv = pkgs.writeShellScriptBin "chisel-test" ''
-              echo "🧪 运行测试..."
-              make test
-            '';
-          };
+          verilog = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "verilog" verilogCmd; };
+          test = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "test" testCmd; };
+          vsim = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "vsim" vsimCmd; };
+          "vsim-trace" = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "vsim-trace" vsimTraceCmd; };
+          wave = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "wave" waveCmd; };
+          clean = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "clean" cleanCmd; };
+          bsp = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "bsp" bspCmd; };
+          idea = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "idea" ideaCmd; };
+          help = flake-utils.lib.mkApp { drv = pkgs.writeShellScriptBin "help" helpCmd; };
         };
 
-        # 包输出（如果需要）
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "chisel-template";
           version = "0.1.0";
-
           src = ./.;
-
           buildInputs = [ jdk mill verilator gcc ];
-
           buildPhase = ''
             export JAVA_HOME="${jdk}"
-            make verilog
+            nix run .#verilog
           '';
-
           installPhase = ''
             mkdir -p $out
-            cp -r build/* $out/
+            cp -r build/* $out/ || true
           '';
         };
       });

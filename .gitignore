@@ -35,6 +35,7 @@ Thumbs.db
 result
 result-*
 flake.lock
+.direnv/
 
 # 临时文件
 *.tmp
